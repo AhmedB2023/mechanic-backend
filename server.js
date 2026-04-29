@@ -62,6 +62,12 @@ app.get("/app", (req, res) => {
     <input id="work" placeholder="Work" /><br/><br/>
 
     <button onclick="save()">Save</button>
+    <input id="searchPhone" placeholder="Enter phone or name" />
+<br/><br/>
+
+<button onclick="search()">Check Records</button>
+
+<div id="results"></div>
 
     <script>
       function save() {
