@@ -38,13 +38,13 @@ app.post("/add-repair", async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
-app.get("/search/:phone", async (req, res) => {
-  const { phone } = req.params;
+app.get("/search/:value", async (req, res) => {
+  const { value } = req.params;
 
   try {
     const result = await pool.query(
-      "SELECT * FROM repairs WHERE phone = $1",
-      [phone]
+      "SELECT * FROM repairs WHERE phone = $1 OR name ILIKE $1",
+      [value]
     );
 
     res.json(result.rows);
