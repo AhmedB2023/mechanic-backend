@@ -54,56 +54,95 @@ app.get("/search/:value", async (req, res) => {
   }
 });
 app.get("/app", (req, res) => {
-  res.send(`
-    <h2>Mechanic App</h2>
+res.send(`
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      max-width: 400px;
+      margin: auto;
+    }
 
-    <input id="phone" placeholder="Phone" /><br/><br/>
-    <input id="name" placeholder="Name" /><br/><br/>
-    <input id="work" placeholder="Work" /><br/><br/>
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
 
-    <button onclick="save()">Save</button>
-    <br/><br/>
-    <input id="searchPhone" placeholder="Enter phone or name" />
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 5px;
+      border: none;
+      border-radius: 8px;
+      background: #007bff;
+      color: white;
+      font-size: 16px;
+    }
 
+    button:hover {
+      background: #0056b3;
+    }
 
-<button onclick="search()">Check Records</button>
+    #results {
+      margin-top: 20px;
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 8px;
+    }
+  </style>
 
-<div id="results"></div>
+  <h2>Mechanic App</h2>
 
-    <script>
-      function save() {
-        fetch("/add-repair", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            phone: document.getElementById("phone").value,
-            name: document.getElementById("name").value,
-            work: document.getElementById("work").value
-          })
+  <input id="phone" placeholder="Phone" />
+  <input id="name" placeholder="Name" />
+  <input id="work" placeholder="Work" />
+
+  <button onclick="save()">Save</button>
+
+  <hr/>
+
+  <input id="searchPhone" placeholder="Enter phone or name" />
+  <button onclick="search()">Check Records</button>
+
+  <div id="results"></div>
+
+  <script>
+    function save() {
+      fetch("/add-repair", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: document.getElementById("phone").value,
+          name: document.getElementById("name").value,
+          work: document.getElementById("work").value
         })
+      })
+      .then(res => res.json())
+      .then(() => alert("Saved"));
+    }
+
+    function search() {
+      const value = document.getElementById("searchPhone").value;
+
+      fetch("/search/" + value)
         .then(res => res.json())
-        .then(data => alert("Saved"))
-      }
-        function search() {
-  const value = document.getElementById("searchPhone").value;
+        .then(data => {
+          let html = "<b>History:</b><br/>";
 
-  fetch("/search/" + value)
-    .then(res => res.json())
-    .then(data => {
-      let html = "<h4>History:</h4>";
+          if (data.length === 0) {
+            html += "No records";
+          }
 
-      if (data.length === 0) {
-        html += "<p>No records found</p>";
-      }
+          data.forEach(r => {
+            html += "<p>" + r.name + " - " + r.work + "</p>";
+          });
 
-      data.forEach(r => {
-        html += "<p>" + r.name + " - " + r.work + "</p>";
-      });
-
-      document.getElementById("results").innerHTML = html;
-    });
-}
-        
-    </script>
-  `);
+          document.getElementById("results").innerHTML = html;
+        });
+    }
+  </script>
+`);
 });
