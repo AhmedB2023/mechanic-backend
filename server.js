@@ -53,3 +53,30 @@ app.get("/search/:phone", async (req, res) => {
     res.status(500).json({ error: "Search error" });
   }
 });
+app.get("/app", (req, res) => {
+  res.send(`
+    <h2>Mechanic App</h2>
+
+    <input id="phone" placeholder="Phone" /><br/><br/>
+    <input id="name" placeholder="Name" /><br/><br/>
+    <input id="work" placeholder="Work" /><br/><br/>
+
+    <button onclick="save()">Save</button>
+
+    <script>
+      function save() {
+        fetch("/add-repair", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phone: document.getElementById("phone").value,
+            name: document.getElementById("name").value,
+            work: document.getElementById("work").value
+          })
+        })
+        .then(res => res.json())
+        .then(data => alert("Saved"))
+      }
+    </script>
+  `);
+});
