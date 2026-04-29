@@ -84,6 +84,26 @@ app.get("/app", (req, res) => {
         .then(res => res.json())
         .then(data => alert("Saved"))
       }
+        function search() {
+  const value = document.getElementById("searchPhone").value;
+
+  fetch("/search/" + value)
+    .then(res => res.json())
+    .then(data => {
+      let html = "<h4>History:</h4>";
+
+      if (data.length === 0) {
+        html += "<p>No records found</p>";
+      }
+
+      data.forEach(r => {
+        html += "<p>" + r.name + " - " + r.work + "</p>";
+      });
+
+      document.getElementById("results").innerHTML = html;
+    });
+}
+        
     </script>
   `);
 });
