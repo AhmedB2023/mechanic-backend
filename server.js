@@ -42,11 +42,10 @@ app.get("/search/:value", async (req, res) => {
   const { value } = req.params;
 
   try {
-    const result = await pool.query(
-      "SELECT * FROM repairs WHERE phone = $1 OR name ILIKE $1",
-      [value]
-    );
-
+const result = await pool.query(
+  "SELECT * FROM repairs WHERE phone = $1 OR name ILIKE $2",
+  [value, `%${value}%`]
+);
     res.json(result.rows);
   } catch (err) {
     console.error(err);
