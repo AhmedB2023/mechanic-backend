@@ -14,7 +14,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// test route
 app.get("/", (req, res) => {
   res.send("Backend working");
 });
@@ -40,7 +39,7 @@ app.get("/search/:value", async (req, res) => {
 
   try {
     const result = await pool.query(
-      "SELECT * FROM repairs WHERE phone = $1 OR name ILIKE $2",
+      "SELECT * FROM repairs WHERE phone = $1 OR name ILIKE $2 ORDER BY created_at DESC",
       [value, `%${value}%`]
     );
 
@@ -53,143 +52,171 @@ app.get("/search/:value", async (req, res) => {
 
 app.get("/app", (req, res) => {
   res.send(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #f4f6f8;
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #f4f6f8;
+    }
+
+    .box {
+      width: 90%;
+      max-width: 400px;
+      background: white;
+      padding: 25px;
+      border-radius: 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 5px;
+      border: none;
+      border-radius: 10px;
+      background: #007bff;
+      color: white;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    hr {
+      margin: 20px 0;
+      border: none;
+      border-top: 1px solid #ddd;
+    }
+
+    #results {
+      margin-top: 18px;
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 10px;
+      min-height: 20px;
+    }
+
+    .record-card {
+      background: white;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .empty {
+      color: #777;
+      font-size: 15px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="box">
+    <h2>Mechanic App</h2>
+
+    <input id="phone" placeholder="Phone" />
+    <input id="name" placeholder="Name" />
+    <input id="work" placeholder="Work done" />
+
+    <button onclick="save()">Save Repair</button>
+
+    <hr />
+
+    <input id="searchPhone" placeholder="Enter phone or name" />
+    <button onclick="search()">Check Records</button>
+
+    <div id="results"></div>
+  </div>
+
+  <script>
+    function save() {
+      fetch("/add-repair", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: document.getElementById("phone").value,
+          name: document.getElementById("name").value,
+          work: document.getElementById("work").value
+        })
+      })
+      .then(res => res.json())
+      .then(() => {
+        alert("Repair saved");
+
+        document.getElementById("phone").value = "";
+        document.getElementById("name").value = "";
+        document.getElementById("work").value = "";
+      });
+    }
+
+    function search() {
+      const value = document.getElementById("searchPhone").value;
+
+      fetch("/search/" + value)
+        .then(res => res.json())
+        .then(data => {
+          let html = "<b>Repair History:</b><br/><br/>";
+
+          if (data.length === 0) {
+            html += "<div class='empty'>No repair history found</div>";
           }
 
-          .box {
-            width: 90%;
-            max-width: 400px;
-            background: white;
-            padding: 25px;
-            border-radius: 14px;
-            box-shadow: 0 4px 18px rgba(0,0,0,0.12);
-          }
+          data.forEach(r => {
+            const date = r.created_at
+              ? new Date(r.created_at).toLocaleDateString()
+              : "No date";
 
-          h2 {
-            text-align: center;
-            margin-bottom: 20px;
-          }
+            html += \`
+              <div class="record-card">
+                <b>👤 \${r.name}</b><br/>
+                📞 \${r.phone}<br/>
+                🔧 \${r.work}<br/>
+                🕒 \${date}
+              </div>
+            \`;
+          });
 
-          input {
-            width: 100%;
-            padding: 14px;
-            margin-bottom: 12px;
-            border-radius: 10px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-            font-size: 16px;
-          }
-
-          button {
-            width: 100%;
-            padding: 14px;
-            margin-top: 5px;
-            border: none;
-            border-radius: 10px;
-            background: #007bff;
-            color: white;
-            font-size: 16px;
-          }
-
-          button:hover {
-            background: #0056b3;
-          }
-
-          hr {
-            margin: 20px 0;
-            border: none;
-            border-top: 1px solid #ddd;
-          }
-
-          #results {
-            margin-top: 18px;
-            background: #f5f5f5;
-            padding: 12px;
-            border-radius: 10px;
-            min-height: 20px;
-          }
-        </style>
-      </head>
-
-      <body>
-        <div class="box">
-          <h2>Mechanic App</h2>
-
-          <input id="phone" placeholder="Phone" />
-          <input id="name" placeholder="Name" />
-          <input id="work" placeholder="Work" />
-
-          <button onclick="save()">Save</button>
-
-          <hr />
-
-          <input id="searchPhone" placeholder="Enter phone or name" />
-          <button onclick="search()">Check Records</button>
-
-          <div id="results"></div>
-        </div>
-
-        <script>
-          function save() {
-            fetch("/add-repair", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                phone: document.getElementById("phone").value,
-                name: document.getElementById("name").value,
-                work: document.getElementById("work").value
-              })
-            })
-              .then(res => res.json())
-              .then(() => {
-                alert("Saved");
-
-                document.getElementById("phone").value = "";
-                document.getElementById("name").value = "";
-                document.getElementById("work").value = "";
-              });
-          }
-
-          function search() {
-            const value = document.getElementById("searchPhone").value;
-
-            fetch("/search/" + value)
-              .then(res => res.json())
-              .then(data => {
-                let html = "<b>History:</b><br/>";
-
-                if (data.length === 0) {
-                  html += "No records";
-                }
-
-                data.forEach(r => {
-                  html += "<p><b>" + r.name + "</b><br/>" + r.phone + "<br/>" + r.work + "</p>";
-                });
-
-                document.getElementById("results").innerHTML = html;
-              });
-          }
-        </script>
-      </body>
-    </html>
+          document.getElementById("results").innerHTML = html;
+        });
+    }
+  </script>
+</body>
+</html>
   `);
 });
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  if (process.env.NODE_ENV === "production") {
+    console.log("Server running in production on port " + PORT);
+  } else {
+    console.log("Server running locally at http://localhost:" + PORT);
+  }
 });
